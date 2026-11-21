@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import "@fontsource/noto-sans-tc/chinese-traditional-400.css";
+import "@fontsource/noto-sans-tc/chinese-traditional-700.css";
+import "maplibre-gl/dist/maplibre-gl.css";
+import "../src/style.css";
 
 export const metadata: Metadata = {
   title: "香港交通地圖",

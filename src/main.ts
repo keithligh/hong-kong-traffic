@@ -1,8 +1,4 @@
 import maplibregl, { type MapLayerMouseEvent } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import "@fontsource/noto-sans-tc/chinese-traditional-400.css";
-import "@fontsource/noto-sans-tc/chinese-traditional-700.css";
-import "./style.css";
 import { localizeBasemap } from "./basemap";
 import { loadCameras, type Camera } from "./cameras";
 import { copy } from "./copy";
