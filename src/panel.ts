@@ -167,6 +167,7 @@ export type LayerState = {
   stations: boolean;
   cctv: boolean;
   aid: boolean;
+  trains: boolean;
 };
 
 const layerLabels: Record<keyof LayerState, string> = {
@@ -174,6 +175,7 @@ const layerLabels: Record<keyof LayerState, string> = {
   stations: copy.stationLayer,
   cctv: copy.cctvLayer,
   aid: copy.aidLayer,
+  trains: copy.trainLayer,
 };
 
 export function renderLayers(

@@ -6,10 +6,11 @@ import "./style.css";
 import { loadCameras, type Camera } from "./cameras";
 import { copy } from "./copy";
 import network from "./data/network.json";
-import { addCameras, addTransit, expandCluster, layerGroups, markStation, setGroupVisible } from "./layers";
+import { addCameras, addTransit, addTrains, expandCluster, layerGroups, markStation, setGroupVisible } from "./layers";
 import { renderCamera, renderIdle, renderLayers, renderStation, renderStationLoading, type LayerState, type LineSchedule } from "./panel";
 import { interpretSchedule } from "./schedule";
 import { stationMatches } from "./search";
+import { startTrains } from "./trains";
 import type { LineRecord, Network, StationRecord } from "./types";
 
 const data = network as Network;
@@ -36,7 +37,7 @@ const searchResults = results;
 
 let selectedCode: string | null = null;
 let requestId = 0;
-const layers: LayerState = { lines: true, stations: true, cctv: true, aid: true };
+const layers: LayerState = { lines: true, stations: true, cctv: true, aid: true, trains: true };
 
 function showBanner(message: string): void {
   if ([...bannerHost.children].some((node) => node.textContent === message)) return;
@@ -194,9 +195,14 @@ map.on("style.load", () => hideBanner(copy.basemapOffline));
 map.on("load", () => {
   hideBanner(copy.basemapOffline);
   addTransit(map, data);
+  addTrains(map);
+  startTrains(map, data, names);
   setGroupVisible(map, layerGroups.lines, layers.lines);
   setGroupVisible(map, layerGroups.stations, layers.stations);
+  setGroupVisible(map, layerGroups.trains, layers.trains);
   map.on("click", "mtr-stations", (event: MapLayerMouseEvent) => {
+    const top = map.queryRenderedFeatures(event.point, { layers: ["mtr-trains", "mtr-stations"] })[0];
+    if (top?.layer.id === "mtr-trains") return;
     const code = event.features?.[0]?.properties?.code;
     const station = typeof code === "string" ? stations.get(code) : undefined;
     if (station) void openStation(station);

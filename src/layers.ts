@@ -81,6 +81,26 @@ export function addTransit(map: MapLibreMap, network: Network): void {
   });
 }
 
+const TRAINS = "mtr-trains";
+
+export function addTrains(map: MapLibreMap): void {
+  map.addSource(TRAINS, {
+    type: "geojson",
+    data: { type: "FeatureCollection", features: [] },
+  });
+  map.addLayer({
+    id: TRAINS,
+    type: "circle",
+    source: TRAINS,
+    paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4.5, 14, 7],
+      "circle-color": ["get", "color"],
+      "circle-stroke-width": 2,
+      "circle-stroke-color": "#ffffff",
+    },
+  });
+}
+
 export function addCameras(map: MapLibreMap, cameras: Camera[]): void {
   for (const kind of ["cctv", "aid"] as const) {
     const points = cameras.filter((camera) => camera.kind === kind);
@@ -172,4 +192,5 @@ export const layerGroups = {
   stations: [STATIONS, LABELS],
   cctv: ["cctv-clusters", "cctv-count", "cctv-points"],
   aid: ["aid-clusters", "aid-count", "aid-points"],
+  trains: [TRAINS],
 };
