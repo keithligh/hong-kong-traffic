@@ -51,4 +51,13 @@ npm run network
 - 快拍位置約每 12 小時讀一次。照片在有人點開時才讀，同一支鏡頭每兩分鐘最多向運輸署要一次。
 - 底圖只保留香港範圍、縮放 14 級以內的圖磚，約保存一天。
 
-沒有人開啟地圖時，不會向這些來源發出請求。本地開發用記憶體裡的資料庫；發佈後使用網站自己的 Postgres。
+沒有人開啟地圖時，不會向這些來源發出請求。本地開發用記憶體裡的資料庫；Cursor 發佈使用網站自己的 Postgres。Cloudflare Workers 則把同一份結果放在邊緣快取。
+
+## Cloudflare Workers
+
+帳號是 `keith@keithli.com`，Worker 名稱是 `hong-kong-traffic`，網址會在 `keith-li.workers.dev` 下面。
+
+```bash
+npx cf auth login
+npm run deploy:vinext
+```

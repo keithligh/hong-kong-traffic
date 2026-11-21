@@ -1,5 +1,3 @@
-import { sql } from "../db";
-
 export type Cached = {
   body: Uint8Array;
   contentType: string;
@@ -24,6 +22,29 @@ type Stored = {
 };
 
 const inflight = new Map<string, Promise<Cached | null>>();
+const memoryRows = new Map<string, Stored>();
+
+function onWorkers(): boolean {
+  return typeof navigator !== "undefined" && navigator.userAgent === "Cloudflare-Workers";
+}
+
+async function sql(text: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
+  const db = await import("../db");
+  return db.sql(text, params);
+}
+
+function memoryClaim(key: string, claimUntil: number, staleBefore: number, now: number): boolean {
+  const row = memoryRows.get(key);
+  if (!row) {
+    memoryRows.set(key, { body: null, contentType: null, fetchedAtMs: null, claimUntilMs: claimUntil });
+    return true;
+  }
+  const stale = row.fetchedAtMs === null || row.fetchedAtMs < staleBefore;
+  const free = row.claimUntilMs === null || row.claimUntilMs < now;
+  if (!stale || !free) return false;
+  row.claimUntilMs = claimUntil;
+  return true;
+}
 
 function asBytes(value: unknown): Uint8Array | null {
   if (value == null) return null;
@@ -49,6 +70,7 @@ function rowOf(row: Record<string, unknown> | undefined): Stored | null {
 }
 
 async function readRow(key: string): Promise<Stored | null> {
+  if (onWorkers()) return memoryRows.get(key) ?? null;
   const rows = await sql(
     "select body, content_type, fetched_at_ms, claim_until_ms from cache_object where key = $1",
     [key],
@@ -57,6 +79,7 @@ async function readRow(key: string): Promise<Stored | null> {
 }
 
 async function claim(key: string, claimUntil: number, staleBefore: number, now: number): Promise<boolean> {
+  if (onWorkers()) return memoryClaim(key, claimUntil, staleBefore, now);
   const updated = await sql(
     `update cache_object
      set claim_until_ms = $2
@@ -78,6 +101,15 @@ async function claim(key: string, claimUntil: number, staleBefore: number, now: 
 }
 
 async function save(key: string, body: Uint8Array, contentType: string, fetchedAtMs: number): Promise<void> {
+  if (onWorkers()) {
+    const row = memoryRows.get(key) ?? { body: null, contentType: null, fetchedAtMs: null, claimUntilMs: null };
+    row.body = body;
+    row.contentType = contentType;
+    row.fetchedAtMs = fetchedAtMs;
+    row.claimUntilMs = null;
+    memoryRows.set(key, row);
+    return;
+  }
   await sql(
     `update cache_object
      set body = $2, content_type = $3, fetched_at_ms = $4, claim_until_ms = null
@@ -87,10 +119,22 @@ async function save(key: string, body: Uint8Array, contentType: string, fetchedA
 }
 
 async function hold(key: string, until: number): Promise<void> {
+  if (onWorkers()) {
+    const row = memoryRows.get(key);
+    if (row) row.claimUntilMs = until;
+    return;
+  }
   await sql("update cache_object set claim_until_ms = $2 where key = $1", [key, until]);
 }
 
 async function evict(prefix: string, keep: number): Promise<void> {
+  if (onWorkers()) {
+    const matches = [...memoryRows.entries()].filter(([key]) => key.startsWith(prefix));
+    if (matches.length <= keep) return;
+    matches.sort((a, b) => (b[1].fetchedAtMs ?? 0) - (a[1].fetchedAtMs ?? 0));
+    for (const [key] of matches.slice(keep)) memoryRows.delete(key);
+    return;
+  }
   const pattern = `${prefix}%`;
   const rows = await sql("select count(*) as count from cache_object where key like $1", [pattern]);
   const count = Number(rows[0]?.count ?? 0);
@@ -159,6 +203,10 @@ export function readThrough(
 
 export async function putRaw(key: string, body: Uint8Array, contentType: string): Promise<void> {
   const now = Date.now();
+  if (onWorkers()) {
+    memoryRows.set(key, { body, contentType, fetchedAtMs: now, claimUntilMs: null });
+    return;
+  }
   await sql(
     `insert into cache_object (key, body, content_type, fetched_at_ms, claim_until_ms)
      values ($1, $2, $3, $4, null)

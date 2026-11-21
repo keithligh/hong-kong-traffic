@@ -7,3 +7,5 @@ dist
 *.local
 __pycache__/
 .venv/
+.vinext/
+.cloudflare/
