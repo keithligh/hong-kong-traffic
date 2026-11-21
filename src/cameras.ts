@@ -11,7 +11,6 @@ export type Camera = {
   url: string;
 };
 
-const LIST_URL = "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.xml";
 const IMAGE_HOST = "https://tdcctv.data.one.gov.hk/";
 
 function field(block: string, tag: string): string {
@@ -50,10 +49,45 @@ export function parseCameraXml(xml: string): Camera[] {
   return cameras;
 }
 
+const localSnapshot = /^\/api\/snapshot\/[A-Za-z0-9]{3,32}$/;
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  return null;
+}
+
+/** Accept only cameras this site serves. A cached payload cannot point the browser elsewhere. */
+export function camerasFromPayload(payload: unknown): Camera[] {
+  if (!Array.isArray(payload)) return [];
+  const cameras: Camera[] = [];
+  for (const item of payload) {
+    const row = asRecord(item);
+    if (!row) continue;
+    const key = typeof row.key === "string" ? row.key : "";
+    const url = typeof row.url === "string" ? row.url : "";
+    const lat = typeof row.lat === "number" ? row.lat : Number.NaN;
+    const lng = typeof row.lng === "number" ? row.lng : Number.NaN;
+    const kind = row.kind === "aid" || row.kind === "cctv" ? row.kind : null;
+    if (!kind || !key || !localSnapshot.test(url)) continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < 22 || lat > 23 || lng < 113.8 || lng > 114.5) continue;
+    cameras.push({
+      key,
+      kind,
+      region: typeof row.region === "string" ? row.region : "",
+      district: typeof row.district === "string" ? row.district : "",
+      description: typeof row.description === "string" && row.description.trim() ? row.description : key,
+      lng,
+      lat,
+      url,
+    });
+  }
+  return cameras;
+}
+
 export async function loadCameras(fetchImpl: typeof fetch = fetch): Promise<Camera[]> {
-  const response = await fetchImpl(LIST_URL);
+  const response = await fetchImpl("/api/cameras");
   if (!response.ok) throw new Error(`camera-list-${response.status}`);
-  return parseCameraXml(await response.text());
+  return camerasFromPayload(await response.json());
 }
 
 /** Refresh the JPEG about as often as the Transport Department updates it. */

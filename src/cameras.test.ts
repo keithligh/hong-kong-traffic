@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { freshImageUrl, parseCameraXml } from "./cameras.ts";
+import { camerasFromPayload, freshImageUrl, parseCameraXml } from "./cameras.ts";
 
 const sample = `<?xml version="1.0" encoding="UTF-8"?>
 <image-list>
@@ -36,6 +36,15 @@ test("camera list keeps Hong Kong points and splits detectors from cameras", () 
   assert.equal(cameras[0]?.kind, "cctv");
   assert.equal(cameras[1]?.kind, "aid");
   assert.equal(cameras[0]?.description.includes("交易廣場"), true);
+});
+
+test("the browser only accepts snapshots served by this site", () => {
+  const cameras = camerasFromPayload([
+    { key: "H106F", kind: "cctv", description: "交易廣場", region: "香港島", district: "中西區", lng: 114.15, lat: 22.28, url: "/api/snapshot/H106F" },
+    { key: "H106F", kind: "cctv", description: "外站", region: "", district: "", lng: 114.15, lat: 22.28, url: "https://tdcctv.data.one.gov.hk/H106F.JPG" },
+  ]);
+  assert.equal(cameras.length, 1);
+  assert.equal(cameras[0]?.url, "/api/snapshot/H106F");
 });
 
 test("snapshot urls refresh on the two-minute government interval", () => {

@@ -31,10 +31,10 @@ export const copy = {
   aidLayer: "交通探測器",
   trainLayer: "列車",
   sourcesTitle: "資料來源",
-  trainSource: "班次來自港鐵實時列車服務資訊。",
+  trainSource: "班次來自港鐵實時列車服務資訊。這個網站約每分鐘統一讀取一次，再分給所有人。",
   photoSource: "圖像來自運輸署交通情況快拍。",
   aboutSources:
-    "底圖為 OpenFreeMap。車站位置來自地政總署社區地理數據庫。路綫次序來自港鐵，形狀沿著 OpenStreetMap 的真實軌道。馬場站按實時班次資料補上。輕鐵和高鐵沒有列入這份班次資料。",
+    "底圖為 OpenFreeMap。車站位置來自地政總署社區地理數據庫。路綫次序來自港鐵，形狀沿著 OpenStreetMap 的真實軌道。馬場站按實時班次資料補上。輕鐵和高鐵沒有列入這份班次資料。班次、快拍和底圖由這個網站代為讀取並暫存，不會由每位使用者直接向來源重複索取。",
   noSearch: "找不到這個車站",
   mapLabel: "香港地圖",
 } as const;
