@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>香港交通地圖</title>
+    <meta name="description" content="查看香港港鐵即將到站的班次，以及運輸署主要道路的最新交通快拍。" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <h1>香港交通地圖</h1>
+        <form id="search-form" role="search">
+          <label class="visually-hidden" for="search">搜尋車站</label>
+          <input id="search" type="search" placeholder="搜尋車站，例如金鐘" autocomplete="off" enterkeyhint="search" />
+          <ul id="search-results" hidden></ul>
+        </form>
+      </header>
+      <div class="stage">
+        <div id="banners"></div>
+        <div id="map"></div>
+      </div>
+      <aside id="panel">
+        <div id="panel-body"></div>
+        <div id="layers"></div>
+      </aside>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
