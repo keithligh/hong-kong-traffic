@@ -16,7 +16,7 @@ export type StationRecord = {
 };
 
 export type Network = {
-  sources: { routes: string; coordinates: string };
+  sources: { routes: string; coordinates: string; shapes: string };
   lines: LineRecord[];
   stations: StationRecord[];
 };

@@ -15,8 +15,10 @@ test("network keeps every heavy-rail station, including Racecourse", () => {
   assert.equal(network.stations.find((station) => station.code === "RAC")?.name, "馬場");
   assert.equal(network.stations.find((station) => station.code === "LHP")?.lines.includes("TKL"), true);
   assert.equal(network.stations.find((station) => station.code === "LMC")?.lines.includes("EAL"), true);
-  const eastRail = network.lines.find((line) => line.code === "EAL");
-  assert.equal(eastRail?.coordinates.length, 3);
+  for (const line of network.lines) {
+    const points = line.coordinates.reduce((count, part) => count + part.length, 0);
+    assert.ok(points > 10, `${line.code} should follow the curved track`);
+  }
 });
 
 test("empty racecourse timetable is a clear empty state", () => {

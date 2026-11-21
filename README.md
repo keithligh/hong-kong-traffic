@@ -27,6 +27,7 @@ npm run dev
 | 路綫次序 | [港鐵路綫及車站表](https://opendata.mtr.com.hk/data/mtr_lines_and_stations.csv) |
 | 馬場站 | 港鐵實時班次 API 有這站，路綫表沒有，地圖補上 |
 | 車站座標 | 地政總署 iGeoCom 鐵路站，由香港 1980 方格網轉成經緯度 |
+| 路綫形狀 | OpenStreetMap 的港鐵軌道，路綫順著真實彎道 |
 | 到站班次 | `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php` |
 | 快拍位置和照片 | [運輸署交通情況快拍圖像](https://data.gov.hk/tc-data/dataset/hk-td-tis_2-traffic-snapshot-images) |
 
@@ -38,7 +39,7 @@ python3 -m venv .venv
 npm run network
 ```
 
-如果 CSV 不在預設位置，可以執行 `npm run network -- --igeocom /路徑/iGeoCOM_POI.csv`。
+如果 CSV 不在預設位置，可以執行 `npm run network -- --igeocom /路徑/iGeoCOM_POI.csv`。軌道彎度可再用 `python3 scripts/apply_track_shapes.py` 從 OpenStreetMap 更新。
 
 重疊路段（例如中環至金鐘）會左右分開約 48 米，兩種顏色才不會疊成一條。
 

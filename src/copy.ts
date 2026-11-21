@@ -33,7 +33,7 @@ export const copy = {
   trainSource: "班次來自港鐵實時列車服務資訊。",
   photoSource: "圖像來自運輸署交通情況快拍。",
   aboutSources:
-    "底圖為 OpenFreeMap。車站位置來自地政總署社區地理數據庫。路綫次序來自港鐵，馬場站按實時班次資料補上。輕鐵和高鐵沒有列入這份班次資料。",
+    "底圖為 OpenFreeMap。車站位置來自地政總署社區地理數據庫。路綫次序來自港鐵，形狀沿著 OpenStreetMap 的真實軌道。馬場站按實時班次資料補上。輕鐵和高鐵沒有列入這份班次資料。",
   noSearch: "找不到這個車站",
   mapLabel: "香港地圖",
 } as const;
