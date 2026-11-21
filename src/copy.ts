@@ -7,6 +7,7 @@ export const copy = {
   idleDense: "快拍點很多。太密時，可用下方開關分開隱藏閉路電視和交通探測器。",
   loadingTrains: "正在查看到站班次",
   noTrains: "暫時沒有到站班次",
+  updatedAt: (clock: string) => `班次更新於 ${clock}，其後約每 30 秒再查一次。`,
   serviceLink: "查看港鐵公告",
   trainOffline: "暫時連不上港鐵資料，請稍後再試",
   delay: "港鐵表示服務有延誤",

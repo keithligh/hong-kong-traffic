@@ -43,6 +43,12 @@ function clockOf(value: unknown): string {
   return match ? match[1] : "";
 }
 
+function platformOf(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "string") return value.trim();
+  return "";
+}
+
 function minutesOf(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value) && value >= 0) return value;
   if (typeof value !== "string" || value.trim() === "") return null;
@@ -54,7 +60,7 @@ function readTrain(raw: RawTrain, names: ReadonlyMap<string, string>): Train | n
   const destCode = typeof raw.dest === "string" ? raw.dest.trim() : "";
   if (!destCode) return null;
   const minutes = minutesOf(raw.ttnt);
-  const platform = typeof raw.plat === "string" ? raw.plat.trim() : "";
+  const platform = platformOf(raw.plat);
   return {
     destCode,
     destName: names.get(destCode) ?? destCode,

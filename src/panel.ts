@@ -30,6 +30,7 @@ function groupTrains(trains: Train[]): Map<string, Train[]> {
 
 export function renderIdle(body: HTMLElement): void {
   body.replaceChildren();
+  body.removeAttribute("aria-busy");
   const block = el("div", "detail");
   block.append(
     el("h2", undefined, copy.idleTitle),
@@ -65,6 +66,7 @@ export function renderStation(
   results: LineSchedule[],
   lines: Map<string, LineRecord>,
   onBack: () => void,
+  view: { focus?: boolean; updatedAt?: string } = {},
 ): void {
   body.replaceChildren();
   body.removeAttribute("aria-busy");
@@ -124,13 +126,15 @@ export function renderStation(
     }
     block.append(section);
   }
+  if (view.updatedAt) block.append(el("p", "source", copy.updatedAt(view.updatedAt)));
   block.append(el("p", "source", copy.trainSource));
   body.append(block);
-  back.focus();
+  if (view.focus !== false) back.focus();
 }
 
 export function renderCamera(body: HTMLElement, camera: Camera, onBack: () => void): void {
   body.replaceChildren();
+  body.removeAttribute("aria-busy");
   const block = el("div", "detail");
   const headingRow = el("div", "heading-row");
   headingRow.append(el("h2", undefined, camera.description));

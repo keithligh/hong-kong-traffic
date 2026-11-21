@@ -51,11 +51,32 @@ function hideBanner(message: string): void {
   }
 }
 
+const REFRESH_MS = 30_000;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+function cancelRefresh(): void {
+  if (refreshTimer !== null) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
 function clearSelection(): void {
+  cancelRefresh();
   requestId += 1;
   markStation(map, selectedCode, null);
   selectedCode = null;
   renderIdle(panelBody);
+}
+
+function hongKongClock(date = new Date()): string {
+  return new Intl.DateTimeFormat("zh-HK", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Asia/Hong_Kong",
+  }).format(date);
 }
 
 const SCHEDULE_TIMEOUT_MS = 8000;
@@ -86,7 +107,19 @@ function padFor(): maplibregl.PaddingOptions {
     : { top: 28, bottom: 28, left: 28, right: 40 };
 }
 
+async function showSchedule(station: StationRecord, token: number, focus: boolean): Promise<void> {
+  const ordered = station.lines.slice().sort((a, b) => data.lines.findIndex((line) => line.code === a) - data.lines.findIndex((line) => line.code === b));
+  const readings = await Promise.all(ordered.map((code) => readLine(code, station.code)));
+  if (token !== requestId) return;
+  renderStation(panelBody, station, readings, lines, clearSelection, { focus, updatedAt: hongKongClock() });
+  refreshTimer = setTimeout(() => {
+    if (token !== requestId) return;
+    void showSchedule(station, token, false);
+  }, REFRESH_MS);
+}
+
 async function openStation(station: StationRecord): Promise<void> {
+  cancelRefresh();
   const token = ++requestId;
   markStation(map, selectedCode, station.code);
   selectedCode = station.code;
@@ -97,14 +130,11 @@ async function openStation(station: StationRecord): Promise<void> {
     padding: padFor(),
     duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450,
   });
-
-  const ordered = station.lines.slice().sort((a, b) => data.lines.findIndex((line) => line.code === a) - data.lines.findIndex((line) => line.code === b));
-  const readings = await Promise.all(ordered.map((code) => readLine(code, station.code)));
-  if (token !== requestId) return;
-  renderStation(panelBody, station, readings, lines, clearSelection);
+  await showSchedule(station, token, true);
 }
 
 function openCamera(camera: Camera): void {
+  cancelRefresh();
   requestId += 1;
   markStation(map, selectedCode, null);
   selectedCode = null;

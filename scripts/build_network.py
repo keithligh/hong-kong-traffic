@@ -12,6 +12,7 @@ and small enough that both lines still meet at the station dot.
 
 from __future__ import annotations
 
+import argparse
 import csv
 import io
 import json
@@ -26,10 +27,7 @@ from pyproj import Transformer
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "src" / "data" / "network.json"
 ROUTES_URL = "https://opendata.mtr.com.hk/data/mtr_lines_and_stations.csv"
-IGEO_CANDIDATES = [
-    Path("/tmp/hkca/iGeoCOM_POI.csv"),
-    ROOT / "data" / "iGeoCOM_POI.csv",
-]
+DEFAULT_IGEOCOM = ROOT / "data" / "iGeoCOM_POI.csv"
 
 # Public line colours. Light colours keep dark text so the name stays readable.
 LINES = {
@@ -70,10 +68,9 @@ def load_routes() -> list[dict[str, str]]:
     return [row for row in csv.DictReader(io.StringIO(raw)) if row["Line Code"].strip()]
 
 
-def load_igeocom() -> dict[str, tuple[float, float, str]]:
-    path = next((item for item in IGEO_CANDIDATES if item.exists()), None)
-    if path is None:
-        sys.exit("找不到 iGeoCom CSV。請先下載 iGeoCOM_POI.csv。")
+def load_igeocom(path: Path) -> dict[str, tuple[float, float, str]]:
+    if not path.is_file():
+        sys.exit(f"找不到 iGeoCom CSV：{path}。請把 iGeoCOM_POI.csv 放到 data/，或用 --igeocom 指定。")
     found: dict[str, tuple[float, float, str]] = {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
@@ -203,13 +200,16 @@ def draw_path(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="由官方資料產生港鐵路網。")
+    parser.add_argument("--igeocom", type=Path, default=DEFAULT_IGEOCOM, help="iGeoCom CSV 路徑")
+    args = parser.parse_args()
     rows = load_routes()
     names: dict[str, tuple[str, str]] = {}
     for row in rows:
         names[row["Station Code"].strip()] = (public_zh(row["Chinese Name"].strip()), row["English Name"].strip())
     names["RAC"] = ("馬場", "Racecourse")
 
-    located = load_igeocom()
+    located = load_igeocom(args.igeocom)
     points: dict[str, tuple[float, float]] = {}
     missing = []
     for code, (zh, _en) in names.items():

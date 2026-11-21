@@ -76,6 +76,18 @@ test("arriving trains and both directions use Chinese destinations", () => {
   assert.equal(reading.trains[0]?.destName, "堅尼地城");
   assert.equal(reading.trains[0]?.uncertain, true);
   assert.equal(reading.trains[1]?.destName, "柴灣");
+  assert.equal(reading.trains[1]?.platform, "3");
+});
+
+test("a numeric platform is kept", () => {
+  const reading = interpretSchedule(
+    {
+      status: 1,
+      data: { "ISL-CEN": { UP: [{ dest: "CHW", plat: 2, ttnt: 1, time: "2026-11-21 10:40:00" }] } },
+    },
+    names,
+  );
+  assert.equal(reading.trains[0]?.platform, "2");
 });
 
 test("a rejected line and station pair is empty, not a connection failure", () => {

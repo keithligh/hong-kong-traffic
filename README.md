@@ -30,7 +30,15 @@ npm run dev
 | 到站班次 | `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php` |
 | 快拍位置和照片 | [運輸署交通情況快拍圖像](https://data.gov.hk/tc-data/dataset/hk-td-tis_2-traffic-snapshot-images) |
 
-車站和路綫已整理在 `src/data/network.json`。要重造這份檔案，先下載 iGeoCom 的 CSV，存成 `data/iGeoCOM_POI.csv`，再執行 `npm run network`。地政總署的下載網站有時不附上中繼憑證，瀏覽器可以下載，這台預設的憑證庫則可能拒絕。
+車站和路綫已整理在 `src/data/network.json`。要重造這份檔案，先下載 iGeoCom 的 CSV，存成 `data/iGeoCOM_POI.csv`。地政總署的下載網站有時不附上中繼憑證，瀏覽器可以下載，這台預設的憑證庫則可能拒絕。然後安裝座標轉換套件再執行：
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install pyproj
+npm run network
+```
+
+如果 CSV 不在預設位置，可以執行 `npm run network -- --igeocom /路徑/iGeoCOM_POI.csv`。
 
 重疊路段（例如中環至金鐘）會左右分開約 48 米，兩種顏色才不會疊成一條。
 
