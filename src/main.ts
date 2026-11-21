@@ -44,6 +44,12 @@ function showBanner(message: string): void {
   bannerHost.append(item);
 }
 
+function hideBanner(message: string): void {
+  for (const node of [...bannerHost.children]) {
+    if (node.textContent === message) node.remove();
+  }
+}
+
 function clearSelection(): void {
   requestId += 1;
   markStation(map, selectedCode, null);
@@ -151,9 +157,9 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-left");
 map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
 
-let styleReady = false;
+map.on("style.load", () => hideBanner(copy.basemapOffline));
 map.on("load", () => {
-  styleReady = true;
+  hideBanner(copy.basemapOffline);
   addTransit(map, data);
   setGroupVisible(map, layerGroups.lines, layers.lines);
   setGroupVisible(map, layerGroups.stations, layers.stations);
@@ -182,8 +188,8 @@ map.on("load", () => {
 });
 
 window.setTimeout(() => {
-  if (!styleReady) showBanner(copy.basemapOffline);
-}, 8000);
+  if (!map.isStyleLoaded()) showBanner(copy.basemapOffline);
+}, 15000);
 
 function bindCameraClicks(): void {
   for (const kind of ["cctv", "aid"] as const) {
