@@ -9,6 +9,7 @@ import network from "./data/network.json";
 import { addCameras, addTransit, expandCluster, layerGroups, markStation, setGroupVisible } from "./layers";
 import { renderCamera, renderIdle, renderLayers, renderStation, renderStationLoading, type LayerState, type LineSchedule } from "./panel";
 import { interpretSchedule } from "./schedule";
+import { stationMatches } from "./search";
 import type { LineRecord, Network, StationRecord } from "./types";
 
 const data = network as Network;
@@ -57,19 +58,25 @@ function clearSelection(): void {
   renderIdle(panelBody);
 }
 
+const SCHEDULE_TIMEOUT_MS = 8000;
+
 async function readLine(code: string, stationCode: string): Promise<LineSchedule> {
   const url = `https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${code}&sta=${stationCode}&lang=TC`;
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SCHEDULE_TIMEOUT_MS);
     try {
-      const response = await fetch(url, { cache: "no-store" });
+      const response = await fetch(url, { cache: "no-store", signal: controller.signal });
       if (!response.ok) throw new Error(String(response.status));
       const payload: unknown = await response.json();
       return { code, ...interpretSchedule(payload, names) };
     } catch {
       if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 300));
+    } finally {
+      clearTimeout(timer);
     }
   }
-  return { code, trains: [], empty: false, delay: false, unreachable: true };
+  return { code, trains: [], empty: false, delay: false, unreachable: true, notice: null, url: null };
 }
 
 function padFor(): maplibregl.PaddingOptions {
@@ -111,11 +118,7 @@ function openCamera(camera: Camera): void {
 }
 
 function searchMatches(query: string): StationRecord[] {
-  const text = query.trim().toLowerCase();
-  if (!text) return [];
-  return data.stations
-    .filter((station) => station.name.toLowerCase().includes(text) || station.en.toLowerCase().includes(text) || station.code.toLowerCase() === text)
-    .slice(0, 8);
+  return data.stations.filter((station) => stationMatches(station, query)).slice(0, 8);
 }
 
 function showMatches(matches: StationRecord[]): void {

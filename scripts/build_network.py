@@ -49,6 +49,11 @@ OFFSET_METRES = 48
 TO_WGS = Transformer.from_crs("EPSG:2326", "EPSG:4326", always_xy=True)
 
 
+def public_zh(name: str) -> str:
+    """The open-data file spells 荔景 with the variant 茘. Show the common form."""
+    return name.replace("\u8318", "\u8354")
+
+
 def norm_zh(name: str) -> str:
     text = name.strip()
     if text.startswith("香港鐵路"):
@@ -201,7 +206,7 @@ def main() -> None:
     rows = load_routes()
     names: dict[str, tuple[str, str]] = {}
     for row in rows:
-        names[row["Station Code"].strip()] = (row["Chinese Name"].strip(), row["English Name"].strip())
+        names[row["Station Code"].strip()] = (public_zh(row["Chinese Name"].strip()), row["English Name"].strip())
     names["RAC"] = ("馬場", "Racecourse")
 
     located = load_igeocom()

@@ -85,4 +85,20 @@ test("a rejected line and station pair is empty, not a connection failure", () =
   );
   assert.equal(reading.empty, true);
   assert.equal(reading.unreachable, false);
+  assert.equal(reading.notice, null);
+});
+
+test("a service notice is shown and a generic empty error is not", () => {
+  const notice = interpretSchedule(
+    {
+      status: 0,
+      message: "因熱帶氣旋，車站暫停服務",
+      url: "https://www.mtr.com.hk/alert",
+    },
+    names,
+  );
+  assert.equal(notice.notice, "因熱帶氣旋，車站暫停服務");
+  assert.equal(notice.url, "https://www.mtr.com.hk/alert");
+  const blocked = interpretSchedule({ status: 0, message: "詳情", url: "javascript:alert(1)" }, names);
+  assert.equal(blocked.url, null);
 });

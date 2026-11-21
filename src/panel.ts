@@ -93,6 +93,15 @@ export function renderStation(
     section.append(title);
     if (result.unreachable) {
       section.append(el("p", "status", copy.trainOffline));
+    } else if (result.notice) {
+      section.append(el("p", "status", result.notice));
+      if (result.url) {
+        const link = el("a", "text-button", copy.serviceLink);
+        link.href = result.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        section.append(link);
+      }
     } else if (result.empty) {
       section.append(el("p", "status", copy.noTrains));
     } else {

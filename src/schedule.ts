@@ -12,6 +12,8 @@ export type ScheduleReading = {
   empty: boolean;
   delay: boolean;
   unreachable: boolean;
+  notice: string | null;
+  url: string | null;
 };
 
 type RawTrain = {
@@ -63,17 +65,30 @@ function readTrain(raw: RawTrain, names: ReadonlyMap<string, string>): Train | n
   };
 }
 
+const GENERIC_NOTICE = new Set(["", "successful", "the contents are empty!"]);
+
+function serviceNotice(root: Record<string, unknown>): { notice: string | null; url: string | null } {
+  const message = typeof root.message === "string" ? root.message.trim() : "";
+  const error = record(root.error);
+  const errorMsg = error && typeof error.errorMsg === "string" ? error.errorMsg.trim() : "";
+  const text = message || errorMsg;
+  const notice = GENERIC_NOTICE.has(text.toLowerCase()) ? null : text;
+  const rawUrl = typeof root.url === "string" ? root.url.trim() : "";
+  const url = rawUrl.startsWith("https://") ? rawUrl : null;
+  return { notice, url };
+}
+
 /** Turn one next-train response into rows the panel can show. */
 export function interpretSchedule(payload: unknown, names: ReadonlyMap<string, string>): ScheduleReading {
   const root = record(payload);
-  if (!root) return { trains: [], empty: false, delay: false, unreachable: true };
+  if (!root) return { trains: [], empty: false, delay: false, unreachable: true, notice: null, url: null };
 
   const status = root.status;
   const failed = status === 0 || status === "0";
   const data = record(root.data);
   const block = data ? record(Object.values(data)[0]) : null;
   if (failed || !block) {
-    return { trains: [], empty: true, delay: false, unreachable: false };
+    return { trains: [], empty: true, delay: false, unreachable: false, ...serviceNotice(root) };
   }
 
   const trains = [...trainList(block.UP), ...trainList(block.DOWN)]
@@ -90,5 +105,7 @@ export function interpretSchedule(payload: unknown, names: ReadonlyMap<string, s
     empty: trains.length === 0,
     delay: root.isdelay === "Y",
     unreachable: false,
+    notice: null,
+    url: null,
   };
 }
